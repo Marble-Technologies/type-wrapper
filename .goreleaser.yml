@@ -1,0 +1,44 @@
+project_name: wrap
+env:
+  - GO111MODULE=on
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - main: .
+    binary: wrap
+    ldflags:
+      - -s -w
+      - -X github.com/Marble-Technologies/type-wrapper/cmd.Version={{.Version}}
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - darwin
+      - linux
+      - windows
+    goarch:
+      - amd64
+      - arm64
+
+archives:
+  - name_template: '{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
+    replacements:
+      darwin: darwin
+      linux: linux
+      windows: windows
+      386: i386
+      amd64: x86_64
+    files:
+      - README.md
+      - LICENSE
+    format_overrides:
+      - goos: windows
+        format: zip
+
+checksum:
+  name_template: "checksum.txt"
+
+release:
+  prerelease: auto
