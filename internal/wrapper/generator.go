@@ -285,8 +285,8 @@ func (g *generator) generateStruct(
 	var tpl = `
 	// {{.WrapperStruct}} encapulates the type {{.Struct}} 
 	type {{.WrapperStruct}} struct {
-		{{.Struct}}
 		` + datatype + `
+		{{.Struct}}		
 	}
 	`
 
