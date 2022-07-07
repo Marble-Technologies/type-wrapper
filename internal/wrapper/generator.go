@@ -254,7 +254,7 @@ func (g *generator) generateReader(
 	}
 
 	var tpl = `
-	func ({{.Receiver}} {{.WrapperStruct}}) Read(p []byte) (int, error) {		
+	func ({{.Receiver}} {{.WrapperStruct}}) Read(buff []byte) (int, error) {		
 	` +
 		lockingCode + // inject locking code
 		`{{.Receiver}}.DataType = "{{.Struct}}"
@@ -262,7 +262,7 @@ func (g *generator) generateReader(
 		if err != nil {
 			return 0, err
 		}
-		n := copy(p, data)
+		n := copy(buff, data)
 		return n, nil
 	}`
 
@@ -281,11 +281,11 @@ func (g *generator) generateStruct(
 ) (string, error) {
 	var datatype string
 	if g.reader {
-		datatype = `// The name of the original type, it gets initalized when calling Read() function, DO NOT USE IT
+		datatype = `// The name of the original type, it gets initialized when calling Read() function, DO NOT USE IT
 		DataType string ` + "`json:\"_data_type,omitempty\"`"
 	}
 	var tpl = `
-	// {{.WrapperStruct}} encapulates the type {{.Struct}} 
+	// {{.WrapperStruct}} encapsulates the type {{.Struct}} 
 	type {{.WrapperStruct}} struct {
 		` + datatype + `
 		{{.Struct}}		
