@@ -35,7 +35,7 @@ func Execute(fs afero.Fs, args []string) {
 	flags := flag.NewFlagSet(args[0], flag.ContinueOnError)
 	flags.Usage = newUsage(flags)
 	version := flags.Bool("version", false, "show the version of wrap")
-	jsonMarshal := flags.Bool("json", false, "generate Json() method")
+	reader := flags.Bool("reader", false, "implement io.Reader interface")
 	typeName := flags.String("type", "", "type name; must be set")
 	wrapperTypeName := flags.String("wrapper", "", "wrapper type name; default <type_name>Wrapper")
 	interfaceName := flags.String("interface", "", "wrapper interface name to be generated")
@@ -87,12 +87,12 @@ func Execute(fs afero.Fs, args []string) {
 		wrapper.Output(*output),
 		wrapper.Receiver(*receiver),
 		wrapper.Lock(*lockName),
-		wrapper.Json(*jsonMarshal),
+		wrapper.Reader(*reader),
 		wrapper.Wrapper(*wrapperTypeName),
 		wrapper.Interface(*interfaceName),
 	}
 	if err = wrapper.Generate(fs, pkg, options...); err != nil {
-		log.Fatal("err")
+		log.Fatal("err", err)
 	}
 }
 

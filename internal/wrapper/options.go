@@ -30,10 +30,10 @@ func Lock(lock string) Option {
 	}
 }
 
-// Generte JSON function
-func Json(json bool) Option {
+// Implement io.Reader
+func Reader(reader bool) Option {
 	return func(g *generator) {
-		g.json = json
+		g.reader = reader
 	}
 }
 

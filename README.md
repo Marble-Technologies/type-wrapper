@@ -10,7 +10,7 @@ type-wrapper is type wrapper generator for [Go programming language](https://gol
 type-wrap is a tool that generates:
 - Wrapper struct from any structs.
 - Getter and Setter methods
-- `Json` method which marshal the original type to `[]byte`
+- `Read` function to read the JSON `[]byte` of the struct
 - Interface for the wrapper struct
 
 Sometimes you might make struct fields unexported in order for values of fields not to be accessed
@@ -159,8 +159,8 @@ func (m MyStructWrapper) SetTime(val time.Time) {
 ```
 
 
-### Generate the `Json` method
-`type-wrapper` can generate `Json` method which uses `encoding/json` package to marshal the original type
+### Generate the `Read` function
+`type-wrapper` can generate `Read` method which uses `encoding/json` package to marshal the original type
 Here is an example ()
 ```go
 type MyStruct struct {
@@ -181,7 +181,7 @@ type IStruct interface {
 	SetField2(val *int)
 	Field3() time.Time
 	SetTime(val time.Time)
-	Json() []byte
+	Read(p []byte) (int, error)
 }
 
 // MyStructWrapper encapulates the type MyStruct
@@ -207,12 +207,14 @@ func (m MyStructWrapper) SetTime(val time.Time) {
 	m.MyStruct.Field3 = val
 }
 
-func (m MyStructWrapper) Json() []byte {
+func (m MyStructWrapper) Read(p []byte) (int, error) {
 	m.DataType = "MyStruct"
-	if data, err := json.Marshal(m); err == nil {
-		return data
+	data, err := json.Marshal(m)
+	if err != nil {
+		return 0, err
 	}
-	return []byte{}
+	n := copy(p, data)
+	return n, nil
 }
 ```
 
@@ -228,8 +230,8 @@ source-dir
 Flags:
   -interface string
         wrapper interface name to be generated
-  -json
-        generate Json() method
+  -reader
+        implement io.Reader interface
   -lock string
         lock name
   -output string
@@ -247,7 +249,7 @@ Flags:
 Example:
 
 ```shell
-$ type-wrapper -type MyStruct -wrapper WStruct -interface IStruct -json -receiver myStruct -output my_struct_wrapper.go path/to/target
+$ type-wrapper -type MyStruct -wrapper WStruct -interface IStruct -reader -receiver myStruct -output my_struct_wrapper.go path/to/target
 ```
 
 #### go generate
@@ -257,7 +259,7 @@ You can also generate wrappers by using `go generate`.
 ```go
 package mypackage
 
-//go:generate type-wrapper -type MyStruct -wrapper WStruct -interface IStruct -json -receiver myStruct -output my_struct_wrapper.go 
+//go:generate type-wrapper -type MyStruct -wrapper WStruct -interface IStruct -reader -receiver myStruct -output my_struct_wrapper.go 
 
 type MyStruct struct {
     field1 string `wrapper:"getter"`

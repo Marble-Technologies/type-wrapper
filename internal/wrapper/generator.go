@@ -22,7 +22,7 @@ type generator struct {
 	output        string
 	receiver      string
 	lock          string
-	json          bool
+	reader        bool
 }
 
 type genParameters struct {
@@ -36,7 +36,7 @@ type genParameters struct {
 	Type          string
 	ZeroValue     string // used only when generating getter
 	Lock          string
-	Json          bool
+	Reader        bool
 }
 
 func newGenerator(fs afero.Fs, pkg *Package, options ...Option) *generator {
@@ -116,12 +116,12 @@ func Generate(fs afero.Fs, pkg *Package, options ...Option) error {
 			}
 		}
 
-		if g.json {
-			jsonFunc, err := g.generateJson(typeParams)
+		if g.reader {
+			readerFunc, err := g.generateReader(typeParams)
 			if err != nil {
 				return err
 			}
-			wrappers = append(wrappers, jsonFunc)
+			wrappers = append(wrappers, readerFunc)
 		}
 
 		iface, err := g.generateInterface(typeParams, ifaces)
@@ -243,7 +243,7 @@ func (g *generator) generateSetterInterface(
 	return buf.String(), nil
 }
 
-func (g *generator) generateJson(
+func (g *generator) generateReader(
 	params *genParameters,
 ) (string, error) {
 	var lockingCode string
@@ -254,17 +254,19 @@ func (g *generator) generateJson(
 	}
 
 	var tpl = `
-	func ({{.Receiver}} {{.WrapperStruct}}) Json() []byte {		
+	func ({{.Receiver}} {{.WrapperStruct}}) Read(p []byte) (int, error) {		
 	` +
 		lockingCode + // inject locking code
 		`{{.Receiver}}.DataType = "{{.Struct}}"
-		if data, err := json.Marshal({{.Receiver}}); err == nil {
-			return data
+		data, err := json.Marshal({{.Receiver}}) 
+		if err != nil {
+			return 0, err
 		}
-		return []byte{}
+		n := copy(p, data)
+		return n, nil
 	}`
 
-	t := template.Must(template.New("json").Parse(tpl))
+	t := template.Must(template.New("reader").Parse(tpl))
 	buf := new(bytes.Buffer)
 
 	if err := t.Execute(buf, params); err != nil {
@@ -278,8 +280,8 @@ func (g *generator) generateStruct(
 	params *genParameters,
 ) (string, error) {
 	var datatype string
-	if g.json {
-		datatype = `// The name of the original type, it gets initalized when calling Json() function, DO NOT USE IT
+	if g.reader {
+		datatype = `// The name of the original type, it gets initalized when calling Read() function, DO NOT USE IT
 		DataType string ` + "`json:\"_data_type,omitempty\"`"
 	}
 	var tpl = `
@@ -305,13 +307,13 @@ func (g *generator) generateInterface(params *genParameters, methods []string) (
 		return "", nil
 	}
 	methodsList := strings.Join(methods, "")
-	var json string
-	if g.json {
-		json = `Json() []byte
+	var reader string
+	if g.reader {
+		reader = `Read(p []byte) (int, error)
 		`
 	}
 	var tpl = `
-	type {{.Interface}} interface {` + methodsList + json + `
+	type {{.Interface}} interface {` + methodsList + reader + `
 	}
 	`
 	t := template.Must(template.New("struct").Parse(tpl))
@@ -341,7 +343,7 @@ func (g *generator) setupParameters(
 		Type:          typeName,
 		ZeroValue:     g.zeroValue(field.Type, typeName),
 		Lock:          g.lock,
-		Json:          g.json,
+		Reader:        g.reader,
 		Interface:     g.interfaceName,
 	}
 }
@@ -355,7 +357,7 @@ func (g *generator) setupTypeParameters(
 		Struct:        st.Name,
 		WrapperStruct: g.wrapperType,
 		Lock:          g.lock,
-		Json:          g.json,
+		Reader:        g.reader,
 		Interface:     g.interfaceName,
 	}
 }
@@ -446,7 +448,7 @@ func (g *generator) generateImportStrings(pkgs []*packages.Package) []string {
 		return pkgs[i].Name < pkgs[j].Name
 	})
 
-	if g.json {
+	if g.reader {
 		var added bool
 		for _, pkg := range pkgs {
 			if pkg.PkgPath == "encoding/json" {

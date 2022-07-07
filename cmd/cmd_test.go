@@ -26,8 +26,8 @@ func TestExecute(t *testing.T) {
 			cmd:    "type-wrapper -type Tester -interface ITester testdata/getter",
 			output: "testdata/getter/tester_wrapper.go",
 		},
-		"GetterAndInterfaceAndJson": {
-			cmd:    "type-wrapper -type Tester -interface ITester -json testdata/getter",
+		"GetterAndInterfaceAndReader": {
+			cmd:    "type-wrapper -type Tester -interface ITester -reader testdata/getter",
 			output: "testdata/getter/tester_wrapper.go",
 		},
 		"Setter": {
@@ -54,16 +54,16 @@ func TestExecute(t *testing.T) {
 			cmd:    "type-wrapper -type Tester -receiver tester testdata/with_receiver",
 			output: "testdata/with_receiver/tester_wrapper.go",
 		},
-		"WithReceiverAndInterfaceAndJson": {
-			cmd:    "type-wrapper -type Tester -receiver tester -interface ITester -json testdata/with_receiver",
+		"WithReceiverAndInterfaceAndReader": {
+			cmd:    "type-wrapper -type Tester -receiver tester -interface ITester -reader testdata/with_receiver",
 			output: "testdata/with_receiver/tester_wrapper.go",
 		},
 		"WithLock": {
 			cmd:    "type-wrapper -type Tester -lock lock testdata/with_lock",
 			output: "testdata/with_lock/tester_wrapper.go",
 		},
-		"WithLockAndInterfaceAndJson": {
-			cmd:    "type-wrapper -type Tester -lock lock -interface ITester -json testdata/with_lock",
+		"WithLockAndInterfaceAndReader": {
+			cmd:    "type-wrapper -type Tester -lock lock -interface ITester -reader testdata/with_lock",
 			output: "testdata/with_lock/tester_wrapper.go",
 		},
 	}
@@ -77,7 +77,7 @@ func TestExecute(t *testing.T) {
 	for name, tt := range tests {
 		tt := tt
 		t.Run(name, func(t *testing.T) {
-			t.Parallel()
+			//	t.Parallel()
 
 			args := strings.Split(tt.cmd, " ")
 			cmd.Execute(fs, args)

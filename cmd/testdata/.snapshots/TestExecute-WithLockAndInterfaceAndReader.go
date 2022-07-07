@@ -10,14 +10,14 @@ type ITester interface {
 	SetField1(val string)
 	GetField2() int32
 	SetField2(val int32)
-	Json() []byte
+	Read(p []byte) (int, error)
 }
 
 // TesterWrapper encapulates the type Tester
 type TesterWrapper struct {
-	Tester
-	// The name of the original type, it gets initalized when calling Json() function, DO NOT USE IT
+	// The name of the original type, it gets initalized when calling Read() function, DO NOT USE IT
 	DataType string `json:"_data_type,omitempty"`
+	Tester
 }
 
 func (t TesterWrapper) GetField1() string {
@@ -44,13 +44,15 @@ func (t TesterWrapper) SetField2(val int32) {
 	t.Tester.field2 = val
 }
 
-func (t TesterWrapper) Json() []byte {
+func (t TesterWrapper) Read(p []byte) (int, error) {
 	t.lock.Lock()
 	defer t.lock.Unlock()
 	t.DataType = "Tester"
-	if data, err := json.Marshal(t); err == nil {
-		return data
+	data, err := json.Marshal(t)
+	if err != nil {
+		return 0, err
 	}
-	return []byte{}
+	n := copy(p, data)
+	return n, nil
 }
 

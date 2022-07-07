@@ -8,14 +8,14 @@ import (
 type ITester interface {
 	Field1() string
 	SetSecondField(val int32)
-	Json() []byte
+	Read(p []byte) (int, error)
 }
 
 // TesterWrapper encapulates the type Tester
 type TesterWrapper struct {
-	Tester
-	// The name of the original type, it gets initalized when calling Json() function, DO NOT USE IT
+	// The name of the original type, it gets initalized when calling Read() function, DO NOT USE IT
 	DataType string `json:"_data_type,omitempty"`
+	Tester
 }
 
 func (tester TesterWrapper) Field1() string {
@@ -26,11 +26,13 @@ func (tester TesterWrapper) SetSecondField(val int32) {
 	tester.Tester.field2 = val
 }
 
-func (tester TesterWrapper) Json() []byte {
+func (tester TesterWrapper) Read(p []byte) (int, error) {
 	tester.DataType = "Tester"
-	if data, err := json.Marshal(tester); err == nil {
-		return data
+	data, err := json.Marshal(tester)
+	if err != nil {
+		return 0, err
 	}
-	return []byte{}
+	n := copy(p, data)
+	return n, nil
 }
 
