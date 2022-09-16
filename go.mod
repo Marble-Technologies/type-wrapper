@@ -3,7 +3,7 @@ module github.com/Marble-Technologies/type-wrapper
 go 1.18
 
 require (
-	github.com/bradleyjkemp/cupaloy/v2 v2.7.0
+	github.com/bradleyjkemp/cupaloy/v2 v2.8.0
 	github.com/spf13/afero v1.8.2
 	golang.org/x/tools v0.1.11
 )
